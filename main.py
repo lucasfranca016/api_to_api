@@ -13,7 +13,7 @@ app = FastAPI()
 def city_function(country: str):
     
     cities_info = get_city_info(country=country)
-
+    
     return cities_info
     
     
