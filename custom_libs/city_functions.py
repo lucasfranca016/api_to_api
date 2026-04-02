@@ -1,21 +1,21 @@
 import requests
-import redis
-import json
-
-r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+from custom_libs.cache_functions import use_stored_cache
+from custom_libs.cache_functions import store_cache
 
 def get_city_info(country: str):
     country = country.lower()
-    cache_key = f"country:{country}"
-
-    # Try to get data from cache
-    cached = r.get(cache_key)
-
-    if cached:
-        print("Cache HIT")
-        return json.loads(cached) # Converts info to dict, which allow it to be returned
-
-    print("Cache MISS")
+    
+    use_stored_cache(country)
+    
+    cache_key = use_stored_cache(country)
+    
+    if cache_key == f"country:{country}":
+        cache_key = use_stored_cache(country)
+    
+    else: 
+        cache_key = use_stored_cache(country)[0] # Get the cache_key result
+    
+    print(cache_key)
     
     cities_url = "https://countriesnow.space/api/v0.1/countries/cities"
     capital_url = "https://countriesnow.space/api/v0.1/countries/capital"
@@ -55,6 +55,6 @@ def get_city_info(country: str):
         }
 
     # Store the data in Redis using cache key. dumps() converts the dict into a string, since Redis stores data as strings
-    r.set(cache_key, json.dumps(city_data), ex=300)
+    store_cache(cache_key, city_data)
     
     return city_data
