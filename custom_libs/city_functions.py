@@ -8,12 +8,12 @@ def get_city_info(country: str):
     country = country.lower()
     cache_key = f"country:{country}"
 
-    # Tenta pegar do cache
+    # Try to get data from cache
     cached = r.get(cache_key)
 
     if cached:
         print("Cache HIT")
-        return json.loads(cached)
+        return json.loads(cached) # Converts info to dict, which allow it to be returned
 
     print("Cache MISS")
     
@@ -28,14 +28,14 @@ def get_city_info(country: str):
         "country": country
     })
     
-    info_cities = response_cities.json()
-    
-    info_capital = response_capital.json()
+    info_cities = response_cities.json() # Transforms into a dict
+
+    info_capital = response_capital.json() # Transforms into a dict
     
     try:
-        cities = info_cities["data"] # Seleciona as cidades no JSON
+        cities = info_cities["data"] # Select the cities from the converted JSON
     
-        capital = info_capital["data"]["capital"] # Seleciona a capital no JSON
+        capital = info_capital["data"]["capital"] # Select the capital from the converted JSON
         
         city_data = {
             "error": info_cities["error"],
@@ -54,6 +54,7 @@ def get_city_info(country: str):
             "msg": "country not found",
         }
 
+    # Store the data in Redis using cache key. dumps() converts the dict into a string, since Redis stores data as strings
     r.set(cache_key, json.dumps(city_data), ex=300)
     
     return city_data

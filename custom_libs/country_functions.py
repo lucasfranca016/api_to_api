@@ -13,6 +13,6 @@ def get_country_info(country_name):
         data = country_payload
     )
 
-    # TODO: Fazer o resto das requisições e juntar tudo
+    # TODO: Make the remaining requests and combine the results
 
     return response_population.json()
