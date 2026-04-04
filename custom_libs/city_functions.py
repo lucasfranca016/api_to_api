@@ -3,19 +3,12 @@ from custom_libs.cache_functions import use_stored_cache
 from custom_libs.cache_functions import store_cache
 
 def get_city_info(country: str):
-    country = country.lower()
+    country = country.lower() # Avoid problems with capitalized country names
     
-    use_stored_cache(country)
+    cache_key, cached_data = use_stored_cache(country)
     
-    cache_key = use_stored_cache(country)
-    
-    if cache_key == f"country:{country}":
-        cache_key = use_stored_cache(country)
-    
-    else: 
-        cache_key = use_stored_cache(country)[0] # Get the cache_key result
-    
-    print(cache_key)
+    if cached_data:
+        return cached_data
     
     cities_url = "https://countriesnow.space/api/v0.1/countries/cities"
     capital_url = "https://countriesnow.space/api/v0.1/countries/capital"
