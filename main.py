@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from custom_libs.country_functions import get_country_info
 from custom_libs.city_functions import get_city_info
+from tenacity import RetryError
 
 class Country(BaseModel):
     country_name: str
@@ -12,10 +13,20 @@ app = FastAPI()
 @app.get("/{country}/cities")
 def city_function(country: str):
     
-    cities_info = get_city_info(country=country)
+    try:
+        cities_info = get_city_info(country=country)
+        
+        return cities_info
     
-    return cities_info
+    except RetryError:
+        print('After a few attempts, it was not possible to connect')
+
+        city_data = {
+                "error": True,
+                "msg": "failed to connect",
+            }
     
+    return city_data
     
 @app.post("/country")
 def country_function(country: Country):

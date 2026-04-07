@@ -2,7 +2,10 @@ import requests
 from requests import RequestException
 from custom_libs.cache_functions import use_stored_cache
 from custom_libs.cache_functions import store_cache
+from tenacity import retry, stop_after_attempt, wait_exponential
 
+
+@retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=1, max=10))
 def get_city_info(country: str):
     country = country.lower() # Avoid problems with capitalized country names
     
@@ -23,10 +26,14 @@ def get_city_info(country: str):
             "country": country
         })
         
+        response_cities.raise_for_status()
+        
+        response_capital.raise_for_status()
+        
         info_cities = response_cities.json() # Transforms into a dict
 
         info_capital = response_capital.json() # Transforms into a dict
-        
+    
         try:
             cities = info_cities["data"] # Select the cities from the converted JSON
         
@@ -40,24 +47,20 @@ def get_city_info(country: str):
                     "capital" : capital,
                     "cities" : cities
             }}
-            
+        
         except KeyError:
             print('O país não foi encontrado')
-        
+    
             city_data = {
                 "error": True,
                 "msg": "country not found",
             }
 
-    except RequestException:
-        print('Não foi possível fazer a requisição.')
-        
-        city_data = {
-                "error": True,
-                "msg": "failed to connect",
-            }
-        
-        # Store the data in Redis using cache key. dumps() converts the dict into a string, since Redis stores data as strings
+    except RequestException as error:
+        print(f'Request error: {error}')
+        raise
+    
+    # Store the data in Redis using cache key. dumps() converts the dict into a string, since Redis stores data as strings
     store_cache(cache_key, city_data)
     
     return city_data
