@@ -49,7 +49,7 @@ def get_city_info(country: str):
             }}
         
         except KeyError:
-            print('O país não foi encontrado')
+            print('Country not found')
     
             city_data = {
                 "error": True,

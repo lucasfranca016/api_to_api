@@ -23,7 +23,7 @@ def city_function(country: str):
 
         city_data = {
                 "error": True,
-                "msg": "failed to connect",
+                "msg": "failed to connect"
             }
     
     return city_data
@@ -31,6 +31,15 @@ def city_function(country: str):
 @app.post("/country")
 def country_function(country: Country):
 
-    country_info = get_country_info(country.country_name)
-
+    try:
+        country_info = get_country_info(country.country_name)
+    
+    except RetryError:
+        print('After a few attempts, it was not possible to connect')
+        
+        country_info = {
+            "error": True,
+            "msg": "failed to connect"
+        }
+    
     return country_info
