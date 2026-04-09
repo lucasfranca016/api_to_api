@@ -2,10 +2,15 @@ import requests
 from requests import RequestException
 from custom_libs.cache_functions import use_stored_cache
 from custom_libs.cache_functions import store_cache
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception
+from custom_libs.retry_functions import should_retry
 
 
-@retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=1, max=10))
+@retry(
+    retry=retry_if_exception(should_retry),
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=1, max=10)
+)
 def get_city_info(country: str):
     country = country.lower() # Avoid problems with capitalized country names
     
@@ -22,13 +27,17 @@ def get_city_info(country: str):
             "country": country
         })
         
+        response_cities.raise_for_status()
+        
         response_capital = requests.post(capital_url, json={
             "country": country
         })
-        
-        response_cities.raise_for_status()
-        
+                
         response_capital.raise_for_status()
+        
+        should_retry(response_cities)
+        
+        should_retry(response_capital)
         
         info_cities = response_cities.json() # Transforms into a dict
 
@@ -57,7 +66,12 @@ def get_city_info(country: str):
             }
 
     except RequestException as error:
-        print(f'Request error: {error}')
+        if error.response is not None:
+            print(f'Request error: {error.response.status_code}')
+            return {
+            "error": True,
+            "msg": f"HTTP error {error.response.status_code}"
+            }
         raise
     
     # Store the data in Redis using cache key. dumps() converts the dict into a string, since Redis stores data as strings

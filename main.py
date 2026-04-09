@@ -12,25 +12,20 @@ app = FastAPI()
 
 @app.get("/{country}/cities")
 def city_function(country: str):
-    
     try:
         cities_info = get_city_info(country=country)
-        
-        return cities_info
-    
+         
     except RetryError:
         print('After a few attempts, it was not possible to connect')
-
-        city_data = {
+        cities_info = {
                 "error": True,
                 "msg": "failed to connect"
             }
-    
-    return city_data
+ 
+    return cities_info
     
 @app.post("/country")
 def country_function(country: Country):
-
     try:
         country_info = get_country_info(country.country_name)
     
